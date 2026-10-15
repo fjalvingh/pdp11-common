@@ -1,0 +1,9 @@
+* text=auto
+
+# MACRO-11 sources are fed to an assembler and compared with its listings; leave them exactly
+# as they are.
+*.mac    -text
+*.mac2   -text
+
+mvnw     text eol=lf
+mvnw.cmd text eol=crlf

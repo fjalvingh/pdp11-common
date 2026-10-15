@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <!--
+        Deliberately without a parent. This repository is a git submodule of both the desktop IDE
+        (pdp11javagui) and the web tools (toolsapp), and is a reactor module of each; a parent
+        pom would have to be one of them. Everything a standalone build needs is therefore here.
+    -->
+    <groupId>to.etc.pdp11</groupId>
+    <artifactId>pdp11-common</artifactId>
+    <version>1.0-SNAPSHOT</version>
+
+    <name>pdp11-common</name>
+    <description>
+        What the desktop and the web application share: addresses, memory cells, the
+        disassembler, memory file formats, the MACRO-11 assembler and the microcode documents.
+        Nothing here talks to a machine - that is pdp11-core, in pdp11javagui - and nothing here
+        depends on either application.
+    </description>
+
+    <organization>
+        <name>etc.to</name>
+        <url>https://etc.to/</url>
+    </organization>
+
+    <licenses>
+        <license>
+            <name>GNU General Public License, version 2</name>
+            <url>https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <id>jal</id>
+            <name>Frits Jalvingh</name>
+            <email>jal@etc.to</email>
+            <organization>etc.to</organization>
+            <organizationUrl>https://etc.to/</organizationUrl>
+        </developer>
+    </developers>
+
+    <properties>
+        <jdk.version>21</jdk.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <junit.version>5.14.4</junit.version>
+        <archunit.version>1.5.0</archunit.version>
+
+        <maven-compiler-plugin.version>3.15.0</maven-compiler-plugin.version>
+        <maven-surefire-plugin.version>3.5.6</maven-surefire-plugin.version>
+        <maven-enforcer-plugin.version>3.6.3</maven-enforcer-plugin.version>
+        <maven-jar-plugin.version>3.5.1</maven-jar-plugin.version>
+        <maven-resources-plugin.version>3.5.0</maven-resources-plugin.version>
+        <!--
+            Pinned only because requirePluginVersions insists every plugin have an explicit
+            version, including the ones Maven binds to the lifecycle by default.
+        -->
+        <maven-clean-plugin.version>3.5.0</maven-clean-plugin.version>
+        <maven-install-plugin.version>3.1.4</maven-install-plugin.version>
+        <maven-deploy-plugin.version>3.1.4</maven-deploy-plugin.version>
+        <maven-site-plugin.version>3.22.0</maven-site-plugin.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
+                <version>${junit.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-launcher</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit-junit5</artifactId>
+            <version>${archunit.version}</version>
+            <scope>test</scope>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>${maven-compiler-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>${maven-surefire-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>${maven-jar-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>${maven-resources-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-clean-plugin</artifactId>
+                    <version>${maven-clean-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-install-plugin</artifactId>
+                    <version>${maven-install-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>${maven-deploy-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-site-plugin</artifactId>
+                    <version>${maven-site-plugin.version}</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-enforcer-plugin</artifactId>
+                <version>${maven-enforcer-plugin.version}</version>
+                <executions>
+                    <execution>
+                        <id>enforce-build-environment</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireMavenVersion>
+                                    <version>[3.9.0,)</version>
+                                </requireMavenVersion>
+                                <requireJavaVersion>
+                                    <version>[${jdk.version},)</version>
+                                </requireJavaVersion>
+                                <banDuplicatePomDependencyVersions/>
+                                <requirePluginVersions>
+                                    <banSnapshots>true</banSnapshots>
+                                </requirePluginVersions>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <includes>
+                        <include>**/*Test.java</include>
+                        <!-- Tests ending in IT drive an external program and skip without it. -->
+                        <include>**/*IT.java</include>
+                    </includes>
+                    <!-- A deadlock must fail the build rather than hang it. -->
+                    <systemPropertyVariables>
+                        <junit.jupiter.execution.timeout.default>60 s</junit.jupiter.execution.timeout.default>
+                    </systemPropertyVariables>
+                </configuration>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <release>${jdk.version}</release>
+                    <compilerArgs>
+                        <arg>-Xlint:all,-serial,-processing</arg>
+                        <!--
+                            THE layering constraint (README.md; PLAN.md section 2 in pdp11javagui).
+
+                            maven-enforcer cannot express this: Swing and AWT are JDK packages,
+                            not artifacts, so there is no dependency to ban. Limiting the module
+                            graph to java.base makes javac refuse the import outright:
+
+                                package javax.swing is not visible
+                                (declared in module java.desktop, which is not in the module graph)
+
+                            which is a compile failure in this module rather than a review comment.
+                            The ArchUnit test in src/test is the belt to this pair of braces; it
+                            also covers the test sources, which are compiled without this flag.
+
+                            If a genuine java.base gap turns up later (java.logging, java.xml, ...)
+                            add that module here explicitly and say why. Never add java.desktop.
+                        -->
+                        <arg>--limit-modules</arg>
+                        <arg>java.base</arg>
+                    </compilerArgs>
+                </configuration>
+                <executions>
+                    <execution>
+                        <!--
+                            Test sources may not be limited to java.base: ArchUnit and JUnit need
+                            more of the JDK than the production code is allowed to touch.
+                        -->
+                        <id>default-testCompile</id>
+                        <goals>
+                            <goal>testCompile</goal>
+                        </goals>
+                        <configuration>
+                            <compilerArgs>
+                                <arg>-Xlint:all,-serial,-processing</arg>
+                            </compilerArgs>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
