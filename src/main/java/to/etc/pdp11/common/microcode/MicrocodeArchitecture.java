@@ -61,6 +61,8 @@ public final class MicrocodeArchitecture {
 
 	private final DontCare m_dontCare;
 
+	private final Meaning m_meaning;
+
 	/**
 	 * Whether a field's printed value is not what the machine does in this microword.
 	 *
@@ -77,6 +79,26 @@ public final class MicrocodeArchitecture {
 
 		/** A machine where every field says what it does. */
 		DontCare NONE = (mi, field) -> null;
+	}
+
+	/**
+	 * What a field's value means in one microword, where that takes more than the field's own
+	 * value names.
+	 *
+	 * <p>The KD11-B's ALU is a 74181, whose function select {@code S3..S0} means one operation
+	 * with {@code MODE} high and another with it low: {@code S = 0110} is {@code A XOR B} as logic
+	 * and {@code A PLUS B} as arithmetic. The two are separate fields because they are separate
+	 * control lines, and the operation they make together is what the select field shows - so
+	 * its meaning is read from the microword rather than from a table keyed by its value
+	 * alone.</p>
+	 */
+	@FunctionalInterface
+	public interface Meaning {
+		/** What this field's value means in this microword, or {@code null} when the print set does not say. */
+		String text(MicroInstruction mi, MicrocodeField field);
+
+		/** Every field means what its own value names say. */
+		Meaning OWN = (mi, field) -> field.text(mi.getValue(field));
 	}
 
 	/**
@@ -97,8 +119,18 @@ public final class MicrocodeArchitecture {
 	 */
 	public MicrocodeArchitecture(String name, List<MicrocodeField> fields, String nextAddressField,
 		String microtestField, Checks checks, DontCare dontCare) {
+		this(name, fields, nextAddressField, microtestField, checks, dontCare, Meaning.OWN);
+	}
+
+	/**
+	 * @param meaning what a field's value means in a microword, for a machine where some field's
+	 *                meaning depends on another's value
+	 */
+	public MicrocodeArchitecture(String name, List<MicrocodeField> fields, String nextAddressField,
+		String microtestField, Checks checks, DontCare dontCare, Meaning meaning) {
 		m_name = name;
 		m_dontCare = dontCare;
+		m_meaning = meaning;
 		m_fields = List.copyOf(fields);
 		m_checks = checks;
 		Map<String, MicrocodeField> byName = new LinkedHashMap<>();
@@ -202,6 +234,11 @@ public final class MicrocodeArchitecture {
 	/** Why this field means nothing in this microword, or {@code null} when it means what it says. */
 	public String dontCareReason(MicroInstruction mi, MicrocodeField field) {
 		return m_dontCare.reason(mi, field);
+	}
+
+	/** What this field's value means in this microword, or {@code null} when the print set does not say. */
+	public String text(MicroInstruction mi, MicrocodeField field) {
+		return m_meaning.text(mi, field);
 	}
 
 	/** Everything wrong with this set of microwords, by this architecture's own rules. */

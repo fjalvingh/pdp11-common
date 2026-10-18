@@ -14,7 +14,9 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -161,12 +163,39 @@ class Kd11bMicrocodeTest {
 	// -----------------------------------------------------------------------------------------
 
 	@Test
-	void theEighteenFieldsUseEveryOneOfTheFortyBits() {
+	void theNineteenFieldsUseEveryOneOfTheFortyBits() {
 		//-- unusedBits() throws on an overlap, so this asserts both halves: the KD11-B has no
 		//-- spare bit, unlike the 11/44 which has two.
 		assertEquals(List.of(), ARCH.unusedBits(Kd11bFields.WORD_BITS));
-		assertEquals(18, ARCH.size());
+		assertEquals(19, ARCH.size());
 		assertEquals(8, ARCH.getAddressBits());
+	}
+
+	/**
+	 * The listing's five-bit ALU column is the 74181's function select and its mode, and the
+	 * select names the operation the two make together: the same select is a logic function with
+	 * the mode high and an arithmetic one with it low.
+	 */
+	@Test
+	void theAluIsAFunctionSelectAndAMode() {
+		assertEquals("31:28", field(Kd11bFields.ALU).bitRange());
+		assertEquals("27", field(Kd11bFields.MODE).bitRange());
+		Map<String, Set<String>> byMode = new TreeMap<>();
+		for(MicroInstruction mi : REV_F.byAddress()) {
+			if(Kd11bFields.takesAluControlFromIr(mi))
+				continue;
+			byMode.computeIfAbsent(mi.getText(field(Kd11bFields.MODE)), k -> new TreeSet<>())
+				.add(mi.getText(field(Kd11bFields.ALU)));
+		}
+		assertEquals(Set.of("ARITHMETIC", "LOGIC"), byMode.keySet());
+		assertTrue(byMode.get("ARITHMETIC").containsAll(List.of("A PLUS B", "A MINUS B MINUS 1", "ASR")),
+			byMode.toString());
+		assertTrue(byMode.get("LOGIC").containsAll(List.of("AL", "BL", "~A")), byMode.toString());
+		//-- AL, the resting operation, is the resting value of both fields.
+		MicroInstruction resting = REV_F.byAddress().stream()
+			.filter(mi -> "AL".equals(mi.getText(field(Kd11bFields.ALU)))).findFirst().orElseThrow();
+		assertTrue(resting.isDefault(field(Kd11bFields.ALU)));
+		assertTrue(resting.isDefault(field(Kd11bFields.MODE)));
 	}
 
 	@Test
@@ -292,7 +321,7 @@ class Kd11bMicrocodeTest {
 
 				//-- The complemented next address, and the ALU code as a number.
 				assertEquals(row.get("NXTADDR"), mi.getNextAddressOctal(), where + "next address");
-				assertEquals(row.get("ALUCODE"), Octal.format(mi.getValue(field(Kd11bFields.ALU)), 2),
+				assertEquals(row.get("ALUCODE"), Octal.format(Kd11bFields.aluCode(mi), 2),
 					where + "ALU code");
 
 				//-- The four fields that are printed in an order that is not their value.

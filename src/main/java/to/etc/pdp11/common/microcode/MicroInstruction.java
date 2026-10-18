@@ -173,9 +173,13 @@ public final class MicroInstruction {
 		return m_fieldValues[m_architecture.indexOf(field)];
 	}
 
-	/** What that value means, or {@code null} when the print set does not name it. */
+	/**
+	 * What that value means, or {@code null} when the print set does not name it. Usually the
+	 * field's own name for the value; on the KD11-B the ALU function select means what it and
+	 * the mode bit say together.
+	 */
 	public String getText(MicrocodeField field) {
-		return field.text(getValue(field));
+		return m_architecture.text(this, field);
 	}
 
 	/**
