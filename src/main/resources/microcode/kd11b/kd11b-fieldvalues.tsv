@@ -65,4 +65,4 @@ CKO	0	0	ON	36
 BTP/BBT	-	BTP=1 BBT=1	BREG	182	B-leg source
 BTP/BBT	-	BTP=0 BBT=1	SEX	6	B-leg source
 BTP/BBT	-	BTP=0 BBT=0	+1	0	B-leg source
-BTP/BBT	-	BTP=1 BBT=0	(not named)	26	observed but absent from the notes
+BTP/BBT	-	BTP=1 BBT=0	+1	26	absent from the notes; +1 per EK-KD11B-MM-001 fig. 4-8, BTOP is ignored with BBOT low

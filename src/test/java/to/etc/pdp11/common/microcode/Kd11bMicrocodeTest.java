@@ -198,6 +198,23 @@ class Kd11bMicrocodeTest {
 		assertTrue(resting.isDefault(field(Kd11bFields.MODE)));
 	}
 
+	/**
+	 * With {@code BBOT} low the B leg is the constant whatever {@code BTOP} says (EK-KD11B-MM-001
+	 * figure 4-8), so the combination the schematic notes leave unnamed is +1 - and it is the
+	 * only +1 the microcode writes: the manual's own encoding, both low, is in no microword.
+	 */
+	@Test
+	void everyBLegCombinationIsNamedAndTheMicrocodesPlusOneLeavesBtopHigh() {
+		MicrocodeField bleg = field(Kd11bFields.BLEG);
+		for(int value = 0; value <= bleg.mask(); value++)
+			assertNotNull(bleg.text(value), "BLEG " + value);
+		Map<Integer, Integer> byValue = new TreeMap<>();
+		for(MicroInstruction mi : REV_F.byAddress())
+			byValue.merge(mi.getValue(bleg), 1, Integer::sum);
+		assertEquals(Map.of(1, 6, 2, 26, 3, 182), byValue);
+		assertEquals("+1", bleg.text(2));
+	}
+
 	@Test
 	void theScratchpadAddressIsNotARangeButTheMicrotestAndBRegisterAre() {
 		assertFalse(field(Kd11bFields.SPA).isContiguous(), "four scattered out-of-order columns");

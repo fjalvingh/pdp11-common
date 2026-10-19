@@ -373,13 +373,38 @@ unaffected.
 | `SPAMUX` | `ROM` 170, `IRS` 16, `IRD` 14, `BA` 14 | selects where the scratchpad address comes from |
 | `SPF` | `READ` 157, `WRITE` 57 | |
 | `ABT` | `NO` 201, `YES` 13 | byte operations enabled |
-| `BTP`/`BBT` | `BREG` 182, `SEX` 6 | B-leg top and bottom source |
+| `BTP`/`BBT` | `BREG` 182, `+1` 26, `SEX` 6 | B-leg top and bottom source — see below |
 | `CKO` | `OFF` 178, `ON` 36 | `CKOFF-L`, the processor clock stop — see below |
 | `AUX` | 9 microwords assert it | selects the ALU control source — see below |
 
 `SPAMUX` gives a clean independent check on the scattered `SPA` field: **all 96 microwords with a
 non-zero ROM scratchpad address have the mux set to `ROM`**, and none of the other 118 do. The two
 decodes were derived separately and agree completely.
+
+### `BTP`/`BBT`, and the combination the notes do not name
+
+EK-KD11B-MM-001 §4.3.6 (Table 4-2, the truth table on page 4-12 and Figure 4-8 on page 4-11)
+settles the B leg. `CONG BBOT H` (bit 16, ROM E115) gates the B register's low byte onto the B
+leg: through the 74S158 mux E021 for bits 00–03, whose select it is, and the 7400 NAND gates
+E020 for bits 04–07. Low, it makes E021 select its other inputs — bits 1–3 grounded, bit 0
+`CONB INH +1 L` — so the low byte is the constant +1, or 0 when the +1 is inhibited. Inverted by
+E058 it is also `DPA +1 H`, the enable of the high byte's muxes E018/E019, so with it low the high
+byte is forced to 0. `CONG BTOP H` (bit 14, ROM E106) is only the select of those two muxes: the
+B register's high byte when high, bit 07 copied into all eight bits when low. The B leg is active
+low, as the ALU's B input is.
+
+| BTP | BBT | B leg | microwords |
+| --- | --- | --- | --- |
+| 1 | 1 | `BREG`, the B register unmodified | 182 |
+| 0 | 1 | `SEX`, the low byte sign extended | 6 |
+| 0 | 0 | `+1` — the manual's encoding | 0 |
+| 1 | 0 | `+1` — BTOP does nothing with BBOT low | 26 |
+
+So the combination the notes leave unnamed is the microcode's own +1, written with `BTOP` left at
+its resting high; the encoding the manual gives is never used. The transcription's derived `BLEG`
+column, made before the manual was read, calls these 26 `BREG/+1`, and the guess that went with
+it — top byte from the B register, bottom +1 — is wrong: the top byte is 0. What drives
+`CONB INH +1 L` (print CONB) the manual does not say.
 
 ### `CKO` and `AUX`, the two the revision changed
 
@@ -521,11 +546,6 @@ decode says. The revision question specifically does **not** need it any more.
   eighth step looks like a byte-wide operation, and the `SBO`/`SB1`/`SB2`/`DO` naming suggests
   shift-out and shift-in routines, but that is a guess and is not written down here as anything
   more.
-- **`BTP=1, BBT=0` occurs in 26 microwords and the schematic notes do not name it.** They name
-  `BREG` (1,1), `SEX` (0,1) and `+1` (0,0); the fourth combination is used more often than two of
-  the named ones. If `BTOP` and `BBOT` independently select the top and bottom halves of the B leg
-  then it reads as "top from B register, bottom `+1`", but that is inference. Worth another look
-  at the schematic.
 - **`IRS` versus `IRD` in `SPAMUX` is not confirmed.** The data pins `ROM` and `BA` — they are the
   two values invariant under swapping the mux bits — but `IRS` (16 microwords) and `IRD` (14) are
   symmetric, so the transcription cannot tell which is which. The value names are taken from the

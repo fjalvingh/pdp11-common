@@ -199,9 +199,16 @@ public final class Kd11bFields {
 		//-- values that swap when the mux bits do - so that pair is inferred, not established.
 		l.add(new MicrocodeField(10, SPAMUX, 3, List.of(17, 19), values("BA", "IRD", "IRS", "ROM")));
 
-		//-- BTOP and BBOT together select the B leg source. BTP=1 BBT=0 occurs in 26 microwords
-		//-- and the schematic notes do not name that combination.
-		l.add(new MicrocodeField(11, BLEG, 3, List.of(14, 16), values("+1", "SEX", null, "BREG")));
+		//-- What goes onto the B leg, the ALU's B input (EK-KD11B-MM-001 4.3.6, figure 4-8). BBOT
+		//-- gates the B register's low byte, and when low puts the constant there instead and
+		//-- disables the high byte's mux; BTOP is that mux's select, so it counts only with BBOT
+		//-- high. The value is BTP BBT:
+		//--   0  BTP=0 BBT=0  +1    the constant: bit 0 is 1, unless CONB INH +1 L makes it 0
+		//--   1  BTP=0 BBT=1  SEX   the low byte, and bit 7 copied into bits 15..8
+		//--   2  BTP=1 BBT=0  +1    the same as 0, since BTOP does nothing with BBOT low. The
+		//--                         microcode's own +1, in 26 microwords; 0 is in none
+		//--   3  BTP=1 BBT=1  BREG  the B register unmodified
+		l.add(new MicrocodeField(11, BLEG, 3, List.of(14, 16), values("+1", "SEX", "+1", "BREG")));
 
 		l.add(MicrocodeField.of(12, BAR, 1, 15, 1, values("BA CLOCK", "")));
 		l.add(MicrocodeField.of(13, SPF, 1, 13, 1, values("WRITE", "READ")));
